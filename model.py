@@ -54,26 +54,25 @@ def generator(samples, batch_size=32):
                 images.append(cv2.flip(right_image,1))
                 angles.append(right_angle*-1.0)
 
-            # trim image to only see section with road
+            # Create training set
             X_train = np.array(images)
             y_train = np.array(angles)
             yield sklearn.utils.shuffle(X_train, y_train)
 
-# Set our batch size
+# Set batch size
 batch_size=32
 
-# compile and train the model using the generator function
+# Compile and train the model using the generator function
 train_generator = generator(train_samples, batch_size=batch_size)
 validation_generator = generator(validation_samples, batch_size=batch_size)
 
-
-
 model = Sequential()
 # Preprocess incoming data, centered around zero with small standard deviation 
-
+# Trip part of the image relevant for the driving
 model.add(Lambda(lambda x: x/255.0 - 0.5, input_shape=(160,320,3)))
 model.add(Cropping2D(cropping=((70,25),(0,0))))
 
+#Nvidia model
 model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='relu'))
 model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='relu'))
 model.add(Conv2D(48, (5, 5), strides=(2, 2), activation='relu'))
@@ -86,8 +85,9 @@ model.add(Dense(50))
 model.add(Dense(10))
 model.add(Dense(1))
 
-
+#compile model
 model.compile(loss='mse', optimizer='adam')
+#train the model
 history_object = model.fit_generator(train_generator, 
             steps_per_epoch=math.ceil(len(train_samples)/batch_size), 
             validation_data=validation_generator, 
@@ -95,11 +95,12 @@ history_object = model.fit_generator(train_generator,
             epochs=10, verbose=1)
 
 
-model.save("mode_gen.h5")
+#save the trained model 
+model.save("model.h5")
 
                       
 ### print the keys contained in the history object
-print(history_object.history.keys())
+#print(history_object.history.keys())
 
 ### plot the training and validation loss for each epoch
 plt.figure()
@@ -109,9 +110,8 @@ plt.title('model mean squared error loss')
 plt.ylabel('mean squared error loss')
 plt.xlabel('epoch')
 plt.legend(['training set', 'validation set'], loc='upper right')
-plt.savefig('loss_gen.png')
+#save the plot as and image 
+plt.savefig('loss.png')
 
+#plot the image
 #plt.show()
-
-
-
